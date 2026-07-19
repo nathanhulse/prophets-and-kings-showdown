@@ -79,13 +79,13 @@ function renderLobby() {
         <div class="join-label">Join on your phone</div>
         <div class="join-url">${location.host}</div>
       </div>
-      <canvas id="qr-canvas"></canvas>
+      <div id="qr-canvas"></div>
     </div>
     <div class="roster" id="roster"></div>
     <button class="primary" id="start-btn">Start the game</button>
   `;
   new QRCode(document.getElementById("qr-canvas"), {
-    text: "https://" + location.host, width: 140, height: 140, colorDark: "#000", colorLight: "#fff",
+    text: location.origin, width: 140, height: 140, colorDark: "#000", colorLight: "#fff",
   });
   document.getElementById("start-btn").onclick = () => ws.send(JSON.stringify({ type: "host_start" }));
   updateRoster(lastPlayers || []);
