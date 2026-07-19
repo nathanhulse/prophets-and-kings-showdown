@@ -16,23 +16,21 @@ Then open:
 - `http://localhost:3000/` — the player join page (open this on your phone, on the same Wi-Fi,
   using your computer's local IP instead of localhost, e.g. `http://192.168.1.23:3000`)
 
-## Deploy it so people can scan a QR code from anywhere
+## It's already deployed
 
-This needs a small always-on server, since phones and the projector have to stay in sync in
-real time. The free tier of **Render** works well and is what was used last time:
+- **Project this:** https://prophets-and-kings-showdown.onrender.com/host.html
+- **Players join at:** https://prophets-and-kings-showdown.onrender.com (or scan the QR)
 
-1. Put this folder in a GitHub repo (or ask to have it pushed for you).
-2. Go to [render.com](https://render.com) → **New Web Service** → connect the repo.
-3. Build command: `npm install`  ·  Start command: `npm start`
-4. Deploy. Render gives you a URL like `yourgame.onrender.com`.
-5. Open `yourgame.onrender.com/host.html` and project it — the QR code and join link
-   update automatically to the live URL.
+Pushing to `main` on the GitHub repo auto-deploys to Render, so editing questions and
+pushing is all it takes to update the live game.
 
-Render's free tier sleeps after inactivity, so open the host URL yourself a minute or two
-before class to wake it up.
+Render's free tier sleeps after about 15 minutes of inactivity and takes ~50 seconds to
+wake. Open the host URL a minute or two before class so a room full of phones doesn't
+hit a cold start all at once.
 
-If you'd rather not deal with GitHub/Render yourself, Claude Code or Cowork can push this
-to a repo and deploy it for you in one go — just hand this folder over there.
+Deploy settings, if it ever needs rebuilding: build command `npm install`, start command
+`npm start`. These are also in `render.yaml`, so a fresh Render Blueprint deploy picks
+them up with no manual configuration.
 
 ## How it works
 
@@ -42,5 +40,25 @@ to a repo and deploy it for you in one go — just hand this folder over there.
 - `public/host.html` — the projector screen: QR code, live roster, live answer tally,
   reveal, and leaderboard.
 
-To add or edit questions, edit the `questions` array at the top of `server.js` — it's
-shared by both the host and player views automatically.
+To add or edit questions, edit the round arrays at the top of `server.js` — they're
+shared by both the host and player views automatically:
+
+- `round1` — Elijah, Elisha, and the divided kingdom (1 Kings 17 – 2 Kings 6)
+- `round2` — Hezekiah, Josiah, and the fall of Judah (2 Kings 16–25)
+
+Each question is `{ cat, tag, q, a: [four answers], c: index of the correct answer }`.
+The `tag` is what shows in the little banner above the question. Note that `c` is
+zero-based, so `c: 1` means the *second* answer is correct.
+
+To add a Round 3, write another array and add it to the `rounds` list below them:
+
+```js
+const rounds = [
+  { name: "Round 1", subtitle: "Elijah, Elisha, and the divided kingdom", questions: round1 },
+  { name: "Round 2", subtitle: "Hezekiah, Josiah, and the fall of Judah", questions: round2 },
+];
+```
+
+The lobby builds its round buttons from that list, so a new round shows up on the
+projector automatically — no other changes needed. Rounds don't have to be the same
+length, and each round starts everyone back at zero.
