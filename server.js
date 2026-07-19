@@ -55,7 +55,34 @@ const rounds = [
 ];
 
 let currentRound = 0;
-const questions = () => rounds[currentRound].questions;
+let activeQuestions = [];
+const questions = () => activeQuestions;
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Authored questions cluster their correct answer in the same slot, which makes the
+// game guessable. Shuffle each question's answers when a round starts, and follow the
+// correct answer to wherever it landed. Reshuffles per play, so positions can't be
+// memorised between rounds either.
+function buildRound(index) {
+  currentRound = index;
+  activeQuestions = rounds[index].questions.map(item => {
+    const order = shuffle(item.a.map((_, i) => i));
+    return {
+      cat: item.cat, tag: item.tag, q: item.q,
+      a: order.map(i => item.a[i]),
+      c: order.indexOf(item.c),
+    };
+  });
+}
+buildRound(0);
 
 let players = new Map(); // ws -> {id, name, avatar, score, answered, choice}
 let hostWs = null;
@@ -164,7 +191,7 @@ wss.on("connection", (ws) => {
 
     if (msg.type === "host_start") {
       const r = Number(msg.round);
-      currentRound = Number.isInteger(r) && r >= 0 && r < rounds.length ? r : 0;
+      buildRound(Number.isInteger(r) && r >= 0 && r < rounds.length ? r : 0);
       currentQuestion = 0;
       players.forEach(p => { p.score = 0; });
       sendQuestion(currentQuestion);
