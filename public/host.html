@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Host \u2014 Prophets & Kings Showdown</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at top, #2b1d4e 0%, #14102b 60%, #0a0818 100%);
+    color: #fff; padding: 30px; display: flex; align-items: center; justify-content: center;
+  }
+  #app { width: 100%; max-width: 1100px; text-align: center; }
+  h1 { font-size: clamp(30px,5vw,52px); font-weight: 800; margin: 0 0 6px;
+    background: linear-gradient(90deg,#ffd166,#ef8354,#ffd166); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p.sub { color: #cbb9f5; font-size: 18px; margin: 0 0 30px; }
+  .join-row { display: flex; align-items: center; justify-content: center; gap: 36px; margin-bottom: 34px; flex-wrap: wrap; }
+  #qr-canvas { background: #fff; padding: 14px; border-radius: 14px; }
+  .join-url { font-size: 28px; font-weight: 800; color: #ffd166; }
+  .join-label { color: #cbb9f5; font-size: 15px; margin-bottom: 6px; }
+  .roster { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 34px; min-height: 50px; }
+  .chip { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 30px;
+    padding: 8px 16px; font-size: 16px; }
+  button.primary { font-size: 20px; font-weight: 700; padding: 16px 42px; border-radius: 50px; border: none;
+    background: linear-gradient(90deg,#ef8354,#ffd166); color: #241634; cursor: pointer; }
+  button.ghost { font-size: 15px; padding: 10px 22px; border-radius: 30px; background: rgba(255,255,255,0.08);
+    color: #e8e0ff; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; margin-left: 12px; }
+  .cat-tag { display: inline-block; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    padding: 5px 16px; border-radius: 20px; margin-bottom: 16px; background: rgba(255,209,102,0.15); color: #ffe6a3; border: 1px solid rgba(255,209,102,0.4); }
+  .qtext { font-size: clamp(24px,3.2vw,36px); font-weight: 700; margin-bottom: 30px; }
+  .bars { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 800px; margin: 0 auto 24px; }
+  .bar-row { text-align: left; }
+  .bar-label { font-size: 16px; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .bar-track { height: 22px; border-radius: 12px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .bar-fill { height: 100%; width: 0%; transition: width 0.3s ease; }
+  .b0 .bar-fill { background: #e63946; } .b1 .bar-fill { background: #3a86ff; }
+  .b2 .bar-fill { background: #ffb703; } .b3 .bar-fill { background: #38b000; }
+  .correct-mark { color: #7CFC98; font-weight: 800; }
+  .leaderboard { max-width: 500px; margin: 0 auto 26px; text-align: left; }
+  .lb-row { display: flex; justify-content: space-between; padding: 10px 18px; border-radius: 12px;
+    background: rgba(255,255,255,0.05); margin-bottom: 8px; font-size: 17px; }
+  .lb-row.top { background: rgba(255,209,102,0.15); border: 1px solid rgba(255,209,102,0.4); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+let ws;
+let playerCount = 0;
+let currentQIndex = -1;
+let currentTotal = 0;
+
+function connect() {
+  const proto = location.protocol === "https:" ? "wss://" : "ws://";
+  ws = new WebSocket(proto + location.host);
+  ws.onopen = () => ws.send(JSON.stringify({ type: "host_hello" }));
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === "player_list") { playerCount = msg.players.length; updateRoster(msg.players); }
+    else if (msg.type === "question") renderQuestion(msg);
+    else if (msg.type === "answer_count") updateBars(msg.counts, msg.total);
+    else if (msg.type === "reveal") renderReveal(msg);
+    else if (msg.type === "final") renderFinal(msg);
+    else if (msg.type === "lobby") renderLobby();
+  };
+  ws.onclose = () => setTimeout(connect, 1500);
+}
+
+function renderLobby() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <h1>Prophets & Kings Showdown</h1>
+    <p class="sub">Elijah, Elisha, and the divided kingdom</p>
+    <div class="join-row">
+      <div>
+        <div class="join-label">Join on your phone</div>
+        <div class="join-url">${location.host}</div>
+      </div>
+      <canvas id="qr-canvas"></canvas>
+    </div>
+    <div class="roster" id="roster"></div>
+    <button class="primary" id="start-btn">Start the game</button>
+  `;
+  new QRCode(document.getElementById("qr-canvas"), {
+    text: "https://" + location.host, width: 140, height: 140, colorDark: "#000", colorLight: "#fff",
+  });
+  document.getElementById("start-btn").onclick = () => ws.send(JSON.stringify({ type: "host_start" }));
+  updateRoster(lastPlayers || []);
+}
+
+let lastPlayers = [];
+function updateRoster(players) {
+  lastPlayers = players;
+  const roster = document.getElementById("roster");
+  if (!roster) return;
+  roster.innerHTML = players.length
+    ? players.map(p => `<span class="chip">${p.avatar} ${p.name}</span>`).join("")
+    : `<span style="color:#cbb9f5">Waiting for players to join\u2026</span>`;
+}
+
+function renderQuestion(msg) {
+  currentQIndex = msg.index;
+  currentTotal = msg.total;
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <span class="cat-tag">${msg.tag} &middot; Question ${msg.index + 1} of ${msg.total}</span>
+    <div class="qtext">${msg.q}</div>
+    <div class="bars" id="bars"></div>
+    <button class="primary" id="reveal-btn">Reveal answer</button>
+  `;
+  const bars = document.getElementById("bars");
+  const shapes = ["\u25B2","\u25C6","\u25CF","\u25A0"];
+  msg.answers.forEach((text, i) => {
+    const row = document.createElement("div");
+    row.className = "bar-row b" + i;
+    row.innerHTML = `<div class="bar-label"><span>${shapes[i]} ${text}</span><span id="count-${i}">0</span></div><div class="bar-track"><div class="bar-fill" id="fill-${i}"></div></div>`;
+    bars.appendChild(row);
+  });
+  document.getElementById("reveal-btn").onclick = () => ws.send(JSON.stringify({ type: "host_reveal" }));
+}
+
+function updateBars(counts, total) {
+  const denom = Math.max(1, total);
+  counts.forEach((c, i) => {
+    const fill = document.getElementById("fill-" + i);
+    const label = document.getElementById("count-" + i);
+    if (fill) fill.style.width = Math.round((c / denom) * 100) + "%";
+    if (label) label.textContent = c;
+  });
+}
+
+function renderReveal(msg) {
+  const bars = document.getElementById("bars");
+  if (bars) {
+    [...bars.children].forEach((row, i) => {
+      if (i === msg.correctIndex) row.querySelector(".bar-label").innerHTML += ' <span class="correct-mark">&check; correct</span>';
+    });
+  }
+  const btn = document.getElementById("reveal-btn");
+  if (btn) {
+    btn.textContent = currentQIndex + 1 < currentTotal ? "Next question \u2192" : "See final results \u2192";
+    btn.onclick = () => ws.send(JSON.stringify({ type: "host_next" }));
+  }
+  const app = document.getElementById("app");
+  const top = [...msg.players].sort((a, b) => b.score - a.score).slice(0, 5);
+  const lb = document.createElement("div");
+  lb.className = "leaderboard";
+  lb.innerHTML = top.map((p, i) => `<div class="lb-row ${i===0 ? "top" : ""}"><span>${p.avatar} ${p.name}</span><span>${p.score}</span></div>`).join("");
+  app.appendChild(lb);
+}
+
+function renderFinal(msg) {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <h1>Final results</h1>
+    <div class="leaderboard">
+      ${msg.leaderboard.map((p, i) => `<div class="lb-row ${i===0 ? "top" : ""}"><span>${i+1}. ${p.avatar} ${p.name}</span><span>${p.score}</span></div>`).join("")}
+    </div>
+    <button class="primary" id="restart-btn">Play again</button>
+  `;
+  document.getElementById("restart-btn").onclick = () => ws.send(JSON.stringify({ type: "host_restart" }));
+}
+
+renderLobby();
+connect();
+</script>
+</body>
+</html>

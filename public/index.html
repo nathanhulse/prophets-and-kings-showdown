@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Prophets & Kings Showdown</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at top, #2b1d4e 0%, #14102b 60%, #0a0818 100%);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #app { width: 100%; max-width: 480px; text-align: center; }
+  h1 { font-size: 26px; font-weight: 800; margin: 6px 0 4px;
+    background: linear-gradient(90deg,#ffd166,#ef8354,#ffd166); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p.sub { color: #cbb9f5; font-size: 14px; margin: 0 0 22px; }
+  input[type=text] {
+    width: 100%; font-size: 18px; padding: 14px 16px; border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #fff;
+    margin-bottom: 18px; font-family: inherit;
+  }
+  input[type=text]::placeholder { color: rgba(255,255,255,0.4); }
+  .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+  .avatar-btn {
+    font-size: 28px; padding: 12px 0; border-radius: 14px; border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06); cursor: pointer;
+  }
+  .avatar-btn.selected { border-color: #ffd166; background: rgba(255,209,102,0.18); }
+  button.primary {
+    width: 100%; font-size: 19px; font-weight: 700; padding: 16px; border-radius: 50px; border: none;
+    background: linear-gradient(90deg,#ef8354,#ffd166); color: #241634; cursor: pointer;
+  }
+  button.primary:disabled { opacity: 0.4; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 30px; padding: 8px 18px; font-size: 16px; margin-bottom: 18px; }
+  .waiting-dots { font-size: 15px; color: #cbb9f5; }
+  .cat-tag { display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; background: rgba(255,209,102,0.15); color: #ffe6a3; border: 1px solid rgba(255,209,102,0.4); }
+  .qtext { font-size: 20px; font-weight: 700; line-height: 1.35; margin-bottom: 20px; }
+  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ans-btn { padding: 22px 10px; border-radius: 16px; font-size: 16px; font-weight: 700; color: #fff; border: none; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .ans-btn:disabled { opacity: 0.55; }
+  .a0 { background: linear-gradient(135deg,#e63946,#a01f2b); }
+  .a1 { background: linear-gradient(135deg,#3a86ff,#1a4fa0); }
+  .a2 { background: linear-gradient(135deg,#ffb703,#c9860a); }
+  .a3 { background: linear-gradient(135deg,#38b000,#1f6b00); }
+  .locked { outline: 4px solid #ffd166; }
+  .correct { outline: 4px solid #7CFC98; }
+  .wrong { outline: 4px solid #ff6b6b; opacity: 0.5; }
+  .score-num { font-size: 48px; font-weight: 800; color: #ffd166; margin: 10px 0; }
+  .rank { font-size: 20px; color: #e8e0ff; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const AVATARS = ["\u{1F451}","\u{1F525}","\u{2694}\u{FE0F}","\u{1F4DC}","\u{1F54A}\u{FE0F}","\u{1F31F}","\u{1F3F9}","\u{1F412}","\u{1F441}\u{FE0F}","\u{26E9}\u{FE0F}","\u26A1","\u{1F3C6}"];
+let selectedAvatar = AVATARS[0];
+let myId = null;
+let currentAnswers = [];
+let lastChoice = null;
+let ws;
+
+function connect() {
+  const proto = location.protocol === "https:" ? "wss://" : "ws://";
+  ws = new WebSocket(proto + location.host);
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === "joined") { myId = msg.id; renderWaiting(); }
+    else if (msg.type === "question") renderQuestion(msg);
+    else if (msg.type === "reveal") renderReveal(msg);
+    else if (msg.type === "final") renderFinal(msg);
+    else if (msg.type === "lobby") renderJoin();
+  };
+  ws.onclose = () => { setTimeout(connect, 1500); };
+}
+
+function renderJoin() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <h1>Prophets & Kings Showdown</h1>
+    <p class="sub">Elijah, Elisha, and the divided kingdom</p>
+    <input type="text" id="name-input" placeholder="Your name" maxlength="18">
+    <div class="avatar-grid" id="avatar-grid"></div>
+    <button class="primary" id="join-btn" disabled>Join the game</button>
+  `;
+  const grid = document.getElementById("avatar-grid");
+  AVATARS.forEach((a, i) => {
+    const b = document.createElement("button");
+    b.className = "avatar-btn" + (i === 0 ? " selected" : "");
+    b.textContent = a;
+    b.onclick = () => {
+      document.querySelectorAll(".avatar-btn").forEach(el => el.classList.remove("selected"));
+      b.classList.add("selected");
+      selectedAvatar = a;
+    };
+    grid.appendChild(b);
+  });
+  const nameInput = document.getElementById("name-input");
+  const joinBtn = document.getElementById("join-btn");
+  nameInput.addEventListener("input", () => { joinBtn.disabled = nameInput.value.trim().length === 0; });
+  joinBtn.onclick = () => {
+    ws.send(JSON.stringify({ type: "join", name: nameInput.value.trim(), avatar: selectedAvatar }));
+  };
+}
+
+function renderWaiting() {
+  document.getElementById("app").innerHTML = `
+    <div class="chip">${selectedAvatar} You're in!</div>
+    <h1>Get ready</h1>
+    <p class="waiting-dots">Waiting for the host to start the game&hellip;</p>
+  `;
+}
+
+function renderQuestion(msg) {
+  currentAnswers = msg.answers;
+  lastChoice = null;
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <span class="cat-tag">${msg.tag} &middot; Q${msg.index + 1}/${msg.total}</span>
+    <div class="qtext">${msg.q}</div>
+    <div class="answers" id="answers"></div>
+    <p id="locked-msg" style="min-height:20px;color:#cbb9f5;margin-top:16px;"></p>
+  `;
+  const shapes = ["\u25B2","\u25C6","\u25CF","\u25A0"];
+  const grid = document.getElementById("answers");
+  msg.answers.forEach((text, i) => {
+    const b = document.createElement("button");
+    b.className = "ans-btn a" + i;
+    b.innerHTML = `<span>${shapes[i]}</span><span>${text}</span>`;
+    b.onclick = () => {
+      if (lastChoice !== null) return;
+      lastChoice = i;
+      ws.send(JSON.stringify({ type: "answer", choice: i }));
+      document.querySelectorAll(".ans-btn").forEach(el => el.disabled = true);
+      b.classList.add("locked");
+      document.getElementById("locked-msg").textContent = "Locked in! Waiting for the host to reveal\u2026";
+    };
+    grid.appendChild(b);
+  });
+}
+
+function renderReveal(msg) {
+  document.querySelectorAll(".ans-btn").forEach((el, i) => {
+    el.disabled = true;
+    if (i === msg.correctIndex) el.classList.add("correct");
+    else if (i === lastChoice) el.classList.add("wrong");
+  });
+  const me = msg.players.find(p => p.id === myId);
+  const msgEl = document.getElementById("locked-msg");
+  if (msgEl) {
+    if (lastChoice === msg.correctIndex) { msgEl.textContent = "Correct! Score: " + (me ? me.score : "-"); msgEl.style.color = "#7CFC98"; }
+    else { msgEl.textContent = lastChoice === null ? "Time's up." : "Not quite. Score: " + (me ? me.score : "-"); msgEl.style.color = "#ff9b9b"; }
+  }
+}
+
+function renderFinal(msg) {
+  const rank = msg.leaderboard.findIndex(p => p.id === myId) + 1;
+  const me = msg.leaderboard.find(p => p.id === myId);
+  document.getElementById("app").innerHTML = `
+    <h1>Final results</h1>
+    <div class="rank">You finished #${rank || "-"} of ${msg.leaderboard.length}</div>
+    <div class="score-num">${me ? me.score : 0}</div>
+    <p class="sub">correct answers</p>
+  `;
+}
+
+renderJoin();
+connect();
+</script>
+</body>
+</html>
