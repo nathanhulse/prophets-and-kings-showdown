@@ -43,6 +43,11 @@
   .lb-row { display: flex; justify-content: space-between; padding: 10px 18px; border-radius: 12px;
     background: rgba(255,255,255,0.05); margin-bottom: 8px; font-size: 17px; }
   .lb-row.top { background: rgba(255,209,102,0.15); border: 1px solid rgba(255,209,102,0.4); }
+  .round-picker { display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  button.round-btn { display: flex; flex-direction: column; gap: 4px; align-items: center; padding: 16px 34px; }
+  .round-name { font-size: 21px; font-weight: 800; }
+  .round-sub { font-size: 13px; font-weight: 600; opacity: 0.75; }
+  .round-picker button.ghost { margin-left: 0; }
 </style>
 </head>
 <body>
@@ -59,7 +64,8 @@ function connect() {
   ws.onopen = () => ws.send(JSON.stringify({ type: "host_hello" }));
   ws.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if (msg.type === "player_list") { playerCount = msg.players.length; updateRoster(msg.players); }
+    if (msg.type === "rounds") { roundMenu = msg.rounds; renderLobby(); }
+    else if (msg.type === "player_list") { playerCount = msg.players.length; updateRoster(msg.players); }
     else if (msg.type === "question") renderQuestion(msg);
     else if (msg.type === "answer_count") updateBars(msg.counts, msg.total);
     else if (msg.type === "reveal") renderReveal(msg);
@@ -69,11 +75,13 @@ function connect() {
   ws.onclose = () => setTimeout(connect, 1500);
 }
 
+let roundMenu = [{ index: 0, name: "Round 1", subtitle: "Elijah, Elisha, and the divided kingdom", count: 16 }];
+
 function renderLobby() {
   const app = document.getElementById("app");
   app.innerHTML = `
     <h1>Prophets & Kings Showdown</h1>
-    <p class="sub">Elijah, Elisha, and the divided kingdom</p>
+    <p class="sub">A review game for the divided kingdom and the kings of Judah</p>
     <div class="join-row">
       <div>
         <div class="join-label">Join on your phone</div>
@@ -82,12 +90,21 @@ function renderLobby() {
       <div id="qr-canvas"></div>
     </div>
     <div class="roster" id="roster"></div>
-    <button class="primary" id="start-btn">Start the game</button>
+    <div class="round-picker">
+      ${roundMenu.map(r => `
+        <button class="primary round-btn" data-round="${r.index}">
+          <span class="round-name">${r.name}</span>
+          <span class="round-sub">${r.subtitle} &middot; ${r.count} questions</span>
+        </button>
+      `).join("")}
+    </div>
   `;
   new QRCode(document.getElementById("qr-canvas"), {
     text: location.origin, width: 140, height: 140, colorDark: "#000", colorLight: "#fff",
   });
-  document.getElementById("start-btn").onclick = () => ws.send(JSON.stringify({ type: "host_start" }));
+  document.querySelectorAll(".round-btn").forEach(btn => {
+    btn.onclick = () => ws.send(JSON.stringify({ type: "host_start", round: Number(btn.dataset.round) }));
+  });
   updateRoster(lastPlayers || []);
 }
 
@@ -106,7 +123,7 @@ function renderQuestion(msg) {
   currentTotal = msg.total;
   const app = document.getElementById("app");
   app.innerHTML = `
-    <span class="cat-tag">${msg.tag} &middot; Question ${msg.index + 1} of ${msg.total}</span>
+    <span class="cat-tag">${msg.roundName ? msg.roundName + " &middot; " : ""}${msg.tag} &middot; Question ${msg.index + 1} of ${msg.total}</span>
     <div class="qtext">${msg.q}</div>
     <div class="bars" id="bars"></div>
     <button class="primary" id="reveal-btn">Reveal answer</button>
@@ -156,11 +173,17 @@ function renderFinal(msg) {
   const app = document.getElementById("app");
   app.innerHTML = `
     <h1>Final results</h1>
+    <p class="sub">${msg.roundName || ""}</p>
     <div class="leaderboard">
       ${msg.leaderboard.map((p, i) => `<div class="lb-row ${i===0 ? "top" : ""}"><span>${i+1}. ${p.avatar} ${p.name}</span><span>${p.score}</span></div>`).join("")}
     </div>
-    <button class="primary" id="restart-btn">Play again</button>
+    <div class="round-picker">
+      ${msg.nextRound != null ? `<button class="primary" id="next-round-btn">Play ${msg.nextRoundName} →</button>` : ""}
+      <button class="primary ghost" id="restart-btn">Back to lobby</button>
+    </div>
   `;
+  const nextBtn = document.getElementById("next-round-btn");
+  if (nextBtn) nextBtn.onclick = () => ws.send(JSON.stringify({ type: "host_start", round: msg.nextRound }));
   document.getElementById("restart-btn").onclick = () => ws.send(JSON.stringify({ type: "host_restart" }));
 }
 
