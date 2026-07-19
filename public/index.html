@@ -2,67 +2,186 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Prophets & Kings Showdown</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#06051a">
+<title>Prophets &amp; Kings Showdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --ink-0:#06051a; --ink-1:#0d0a29; --ink-2:#181043;
+    --gold-1:#ffeeba; --gold-2:#f5c451; --gold-3:#c2922c;
+    --text:#f2ecff; --muted:#b6a5e6;
+    --a0a:#e63946; --a0b:#7d0f1c;
+    --a1a:#4d94ff; --a1b:#14337a;
+    --a2a:#ffb703; --a2b:#a35c00;
+    --a3a:#2dd4a0; --a3b:#0a6046;
+    --serif:'Cinzel', 'Palatino Linotype', Georgia, serif;
+    --sans:'Outfit', 'Trebuchet MS', 'Segoe UI', sans-serif;
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
   body {
-    margin: 0; min-height: 100vh;
-    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-    background: radial-gradient(ellipse at top, #2b1d4e 0%, #14102b 60%, #0a0818 100%);
-    color: #fff; display: flex; align-items: center; justify-content: center;
-    padding: 20px;
+    margin: 0; min-height: 100vh; font-family: var(--sans); color: var(--text);
+    background: var(--ink-0);
+    display: flex; align-items: center; justify-content: center;
+    padding: max(20px, env(safe-area-inset-top)) 18px max(20px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
   }
-  #app { width: 100%; max-width: 480px; text-align: center; }
-  h1 { font-size: 26px; font-weight: 800; margin: 6px 0 4px;
-    background: linear-gradient(90deg,#ffd166,#ef8354,#ffd166); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  p.sub { color: #cbb9f5; font-size: 14px; margin: 0 0 22px; }
+  .bg { position: fixed; inset: 0; z-index: -3; pointer-events: none;
+    background:
+      radial-gradient(ellipse 120% 55% at 50% -8%, #3a2578 0%, transparent 62%),
+      radial-gradient(ellipse 90% 45% at 50% 108%, #1d1250 0%, transparent 62%),
+      linear-gradient(180deg, var(--ink-1) 0%, var(--ink-0) 100%); }
+  .blob { position: fixed; z-index: -2; border-radius: 50%; filter: blur(70px); opacity: 0.35; pointer-events: none; }
+  .blob.b1 { width: 80vw; height: 80vw; left: -30vw; top: -30vw; background: #6d3bd6; animation: drift1 24s ease-in-out infinite; }
+  .blob.b2 { width: 65vw; height: 65vw; right: -25vw; bottom: -25vw; background: #b4791f; opacity: 0.24; animation: drift2 29s ease-in-out infinite; }
+  @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(10vw,7vw) scale(1.14); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1.05); } 50% { transform: translate(-8vw,-6vw) scale(0.94); } }
+  .grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"); }
+
+  #app { width: 100%; max-width: 500px; text-align: center; }
+
+  h1 { font-family: var(--serif); font-size: 30px; font-weight: 900; line-height: 1.12; margin: 4px 0 6px;
+    letter-spacing: 0.5px;
+    background: linear-gradient(175deg, #fff6dc 6%, var(--gold-2) 48%, #a9781d 98%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 14px rgba(245,196,81,0.3)); }
+  p.sub { font-family: var(--serif); color: var(--muted); font-size: 12px; letter-spacing: 2.2px;
+    text-transform: uppercase; margin: 0 0 24px; }
+  .rule { width: 180px; height: 1px; margin: 0 auto 24px; position: relative;
+    background: linear-gradient(90deg, transparent, rgba(245,196,81,0.55), transparent); }
+  .rule::after { content: "✦"; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    color: var(--gold-2); font-size: 11px; background: var(--ink-0); padding: 0 9px; }
+  .rise { animation: rise 0.45s cubic-bezier(.16,.9,.3,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- join ---------- */
   input[type=text] {
-    width: 100%; font-size: 18px; padding: 14px 16px; border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #fff;
-    margin-bottom: 18px; font-family: inherit;
-  }
-  input[type=text]::placeholder { color: rgba(255,255,255,0.4); }
-  .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
-  .avatar-btn {
-    font-size: 28px; padding: 12px 0; border-radius: 14px; border: 2px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.06); cursor: pointer;
-  }
-  .avatar-btn.selected { border-color: #ffd166; background: rgba(255,209,102,0.18); }
-  button.primary {
-    width: 100%; font-size: 19px; font-weight: 700; padding: 16px; border-radius: 50px; border: none;
-    background: linear-gradient(90deg,#ef8354,#ffd166); color: #241634; cursor: pointer;
-  }
-  button.primary:disabled { opacity: 0.4; }
-  .chip { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.2); border-radius: 30px; padding: 8px 18px; font-size: 16px; margin-bottom: 18px; }
-  .waiting-dots { font-size: 15px; color: #cbb9f5; }
-  .cat-tag { display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-    padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; background: rgba(255,209,102,0.15); color: #ffe6a3; border: 1px solid rgba(255,209,102,0.4); }
-  .qtext { font-size: 20px; font-weight: 700; line-height: 1.35; margin-bottom: 20px; }
+    width: 100%; font-size: 18px; font-family: inherit; font-weight: 600; padding: 16px 18px;
+    border-radius: 16px; border: 1px solid rgba(245,196,81,0.35); color: var(--text);
+    background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+    margin-bottom: 20px; transition: border-color 0.18s ease, box-shadow 0.18s ease; }
+  input[type=text]:focus { outline: none; border-color: var(--gold-2);
+    box-shadow: 0 0 0 3px rgba(245,196,81,0.18), 0 0 26px rgba(245,196,81,0.2); }
+  input[type=text]::placeholder { color: rgba(255,255,255,0.38); font-weight: 500; }
+  .pick-label { font-family: var(--serif); font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px; }
+  .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+  .avatar-btn { font-size: 27px; padding: 12px 0; border-radius: 16px; line-height: 1;
+    border: 2px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); cursor: pointer;
+    transition: transform 0.16s cubic-bezier(.2,1.4,.4,1), border-color 0.16s ease, background 0.16s ease; }
+  .avatar-btn:active { transform: scale(0.9); }
+  .avatar-btn.selected { border-color: var(--gold-2); background: rgba(245,196,81,0.2);
+    transform: scale(1.09); box-shadow: 0 0 22px rgba(245,196,81,0.35); }
+
+  button { font-family: var(--sans); cursor: pointer; }
+  button.primary { position: relative; overflow: hidden; width: 100%; font-size: 19px; font-weight: 800;
+    padding: 17px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.3); color: #2b1a06;
+    background: linear-gradient(180deg, #ffe9a8 0%, var(--gold-2) 52%, #d9a334 100%);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 22px rgba(245,196,81,0.26), inset 0 1px 0 rgba(255,255,255,0.7);
+    transition: transform 0.14s ease, opacity 0.2s ease; }
+  button.primary:active { transform: scale(0.97); }
+  button.primary:disabled { opacity: 0.35; box-shadow: none; }
+  button.primary::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent);
+    transform: skewX(-20deg); animation: sheen 4.5s ease-in-out infinite; }
+  button.primary:disabled::after { display: none; }
+  @keyframes sheen { 0%, 62% { left: -60%; } 82%, 100% { left: 130%; } }
+
+  /* ---------- waiting ---------- */
+  .chip { display: inline-flex; align-items: center; gap: 9px; font-size: 16px; font-weight: 700;
+    background: linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.05));
+    border: 1px solid rgba(245,196,81,0.4); border-radius: 40px; padding: 10px 22px; margin-bottom: 20px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.36); animation: chipPop 0.55s cubic-bezier(.2,1.5,.4,1) both; }
+  @keyframes chipPop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .crest { font-size: 56px; line-height: 1; margin-bottom: 12px; animation: breathe 2.6s ease-in-out infinite;
+    filter: drop-shadow(0 4px 20px rgba(245,196,81,0.45)); }
+  @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+  .waiting-dots { font-size: 15px; color: var(--muted); }
+  .waiting-dots i { display: inline-block; animation: bob 1.4s ease-in-out infinite; font-style: normal; }
+  .waiting-dots i:nth-child(2) { animation-delay: 0.16s; } .waiting-dots i:nth-child(3) { animation-delay: 0.32s; }
+  @keyframes bob { 0%,100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-4px); opacity: 1; } }
+
+  /* ---------- question ---------- */
+  .cat-tag { display: inline-block; font-family: var(--serif); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2.5px; padding: 6px 16px; border-radius: 20px; margin-bottom: 14px;
+    background: linear-gradient(180deg, rgba(245,196,81,0.22), rgba(245,196,81,0.08));
+    color: var(--gold-1); border: 1px solid rgba(245,196,81,0.42); }
+  .qtext { font-size: 21px; font-weight: 800; line-height: 1.32; margin-bottom: 22px;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.5); }
   .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .ans-btn { padding: 22px 10px; border-radius: 16px; font-size: 16px; font-weight: 700; color: #fff; border: none; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .ans-btn:disabled { opacity: 0.55; }
-  .a0 { background: linear-gradient(135deg,#e63946,#a01f2b); }
-  .a1 { background: linear-gradient(135deg,#3a86ff,#1a4fa0); }
-  .a2 { background: linear-gradient(135deg,#ffb703,#c9860a); }
-  .a3 { background: linear-gradient(135deg,#38b000,#1f6b00); }
-  .locked { outline: 4px solid #ffd166; }
-  .correct { outline: 4px solid #7CFC98; }
-  .wrong { outline: 4px solid #ff6b6b; opacity: 0.5; }
-  .score-num { font-size: 48px; font-weight: 800; color: #ffd166; margin: 10px 0; }
-  .rank { font-size: 20px; color: #e8e0ff; margin-bottom: 6px; }
+  .ans-btn { position: relative; overflow: hidden; padding: 20px 10px; border-radius: 18px; min-height: 96px;
+    font-size: 15.5px; font-weight: 700; line-height: 1.25; color: #fff; border: 1px solid rgba(255,255,255,0.2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.5); box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.22);
+    animation: rise 0.45s cubic-bezier(.16,.9,.3,1) both;
+    transition: transform 0.16s ease, opacity 0.35s ease, filter 0.35s ease, box-shadow 0.3s ease; }
+  .ans-btn:nth-child(1) { animation-delay: 0.04s; } .ans-btn:nth-child(2) { animation-delay: 0.1s; }
+  .ans-btn:nth-child(3) { animation-delay: 0.16s; } .ans-btn:nth-child(4) { animation-delay: 0.22s; }
+  .ans-btn:active:not(:disabled) { transform: scale(0.95); }
+  .ans-shape { font-size: 21px; opacity: 0.95; }
+  .a0 { background: linear-gradient(150deg, var(--a0a), var(--a0b)); }
+  .a1 { background: linear-gradient(150deg, var(--a1a), var(--a1b)); }
+  .a2 { background: linear-gradient(150deg, var(--a2a), var(--a2b)); }
+  .a3 { background: linear-gradient(150deg, var(--a3a), var(--a3b)); }
+  .ans-btn.faded { opacity: 0.3; filter: saturate(0.3); }
+  .ans-btn.locked { border-color: var(--gold-2); box-shadow: 0 0 0 3px rgba(245,196,81,0.6), 0 0 34px rgba(245,196,81,0.42);
+    transform: scale(1.03); }
+  .ans-btn.correct { border-color: #7CFC98; opacity: 1; filter: none;
+    box-shadow: 0 0 0 3px rgba(124,252,152,0.75), 0 0 40px rgba(124,252,152,0.5);
+    animation: winPulse 1.3s ease-in-out infinite; }
+  @keyframes winPulse { 0%,100% { box-shadow: 0 0 0 3px rgba(124,252,152,0.7), 0 0 30px rgba(124,252,152,0.4); }
+    50% { box-shadow: 0 0 0 3px rgba(124,252,152,0.95), 0 0 52px rgba(124,252,152,0.68); } }
+  .ans-btn.wrong { opacity: 0.42; filter: saturate(0.35); animation: shake 0.45s ease both; }
+  @keyframes shake { 10%,90% { transform: translateX(-2px); } 30%,70% { transform: translateX(4px); } 50% { transform: translateX(-4px); } }
+
+  .status { min-height: 26px; margin-top: 18px; font-size: 15px; font-weight: 700; letter-spacing: 0.3px; color: var(--muted); }
+  .status.good { color: #7CFC98; } .status.bad { color: #ff9b9b; }
+  .status.lock { color: var(--gold-1); }
+
+  /* full-screen verdict flash */
+  .flash { position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: 0;
+    display: grid; place-items: center; }
+  .flash.show { animation: flashIn 1.15s ease both; }
+  .flash .mark { font-size: 110px; filter: drop-shadow(0 6px 26px rgba(0,0,0,0.5)); }
+  .flash.good { background: radial-gradient(circle at center, rgba(45,212,160,0.35), rgba(6,5,26,0) 68%); }
+  .flash.bad { background: radial-gradient(circle at center, rgba(230,57,70,0.32), rgba(6,5,26,0) 68%); }
+  @keyframes flashIn { 0% { opacity: 0; transform: scale(0.85); } 22% { opacity: 1; transform: scale(1); }
+    72% { opacity: 1; } 100% { opacity: 0; transform: scale(1.06); } }
+
+  /* ---------- final ---------- */
+  .trophy { font-size: 68px; line-height: 1; margin-bottom: 8px;
+    filter: drop-shadow(0 6px 24px rgba(245,196,81,0.5)); animation: trophyIn 0.75s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes trophyIn { 0% { transform: scale(0.2) rotate(-25deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .rank { font-family: var(--serif); font-size: 19px; font-weight: 700; color: var(--text); margin-bottom: 10px; letter-spacing: 1px; }
+  .score-num { font-size: 62px; font-weight: 900; line-height: 1; margin: 6px 0; font-variant-numeric: tabular-nums;
+    background: linear-gradient(175deg, #fff6dc, var(--gold-2) 55%, #a9781d);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 3px 18px rgba(245,196,81,0.4)); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important;
+      transition-duration: 0.08s !important; }
+  }
 </style>
 </head>
 <body>
+<div class="bg"></div><div class="blob b1"></div><div class="blob b2"></div><div class="grain"></div>
 <div id="app"></div>
+<div class="flash" id="flash"><div class="mark" id="flash-mark"></div></div>
 <script>
-const AVATARS = ["\u{1F451}","\u{1F525}","\u{2694}\u{FE0F}","\u{1F4DC}","\u{1F54A}\u{FE0F}","\u{1F31F}","\u{1F3F9}","\u{1F412}","\u{1F441}\u{FE0F}","\u{26E9}\u{FE0F}","\u26A1","\u{1F3C6}"];
+const AVATARS = ["\u{1F451}","\u{1F525}","\u{2694}\u{FE0F}","\u{1F4DC}","\u{1F54A}\u{FE0F}","\u{1F31F}","\u{1F3F9}","\u{1F412}","\u{1F441}\u{FE0F}","\u{26E9}\u{FE0F}","⚡","\u{1F3C6}"];
+const SHAPES = ["▲","◆","●","■"];
 let selectedAvatar = AVATARS[0];
 let myId = null;
 let currentAnswers = [];
 let lastChoice = null;
 let ws;
+
+function buzz(ms) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } }
 
 function connect() {
   const proto = location.protocol === "https:" ? "wss://" : "ws://";
@@ -81,9 +200,11 @@ function connect() {
 function renderJoin() {
   const app = document.getElementById("app");
   app.innerHTML = `
-    <h1>Prophets & Kings Showdown</h1>
-    <p class="sub">Elijah, Elisha, and the divided kingdom</p>
-    <input type="text" id="name-input" placeholder="Your name" maxlength="18">
+    <h1 class="rise">Prophets &amp; Kings Showdown</h1>
+    <p class="sub rise">The divided kingdom &amp; the kings of Judah</p>
+    <div class="rule"></div>
+    <input type="text" id="name-input" placeholder="Your name" maxlength="18" autocomplete="off">
+    <div class="pick-label">Choose your sigil</div>
     <div class="avatar-grid" id="avatar-grid"></div>
     <button class="primary" id="join-btn" disabled>Join the game</button>
   `;
@@ -96,6 +217,7 @@ function renderJoin() {
       document.querySelectorAll(".avatar-btn").forEach(el => el.classList.remove("selected"));
       b.classList.add("selected");
       selectedAvatar = a;
+      buzz(12);
     };
     grid.appendChild(b);
   });
@@ -110,8 +232,9 @@ function renderJoin() {
 function renderWaiting() {
   document.getElementById("app").innerHTML = `
     <div class="chip">${selectedAvatar} You're in!</div>
+    <div class="crest">${selectedAvatar}</div>
     <h1>Get ready</h1>
-    <p class="waiting-dots">Waiting for the host to start the game&hellip;</p>
+    <p class="waiting-dots">Waiting for the host to start<i>.</i><i>.</i><i>.</i></p>
   `;
 }
 
@@ -120,52 +243,87 @@ function renderQuestion(msg) {
   lastChoice = null;
   const app = document.getElementById("app");
   app.innerHTML = `
-    <span class="cat-tag">${msg.tag} &middot; Q${msg.index + 1}/${msg.total}</span>
-    <div class="qtext">${msg.q}</div>
+    <span class="cat-tag rise">${msg.tag} &middot; Q${msg.index + 1}/${msg.total}</span>
+    <div class="qtext rise">${msg.q}</div>
     <div class="answers" id="answers"></div>
-    <p id="locked-msg" style="min-height:20px;color:#cbb9f5;margin-top:16px;"></p>
+    <p class="status" id="locked-msg"></p>
   `;
-  const shapes = ["\u25B2","\u25C6","\u25CF","\u25A0"];
   const grid = document.getElementById("answers");
   msg.answers.forEach((text, i) => {
     const b = document.createElement("button");
     b.className = "ans-btn a" + i;
-    b.innerHTML = `<span>${shapes[i]}</span><span>${text}</span>`;
+    b.innerHTML = `<span class="ans-shape">${SHAPES[i]}</span><span>${text}</span>`;
     b.onclick = () => {
       if (lastChoice !== null) return;
       lastChoice = i;
+      buzz(18);
       ws.send(JSON.stringify({ type: "answer", choice: i }));
-      document.querySelectorAll(".ans-btn").forEach(el => el.disabled = true);
+      document.querySelectorAll(".ans-btn").forEach((el, j) => {
+        el.disabled = true;
+        if (j !== i) el.classList.add("faded");
+      });
       b.classList.add("locked");
-      document.getElementById("locked-msg").textContent = "Locked in! Waiting for the host to reveal\u2026";
+      const m = document.getElementById("locked-msg");
+      m.textContent = "Locked in — waiting for the reveal…";
+      m.className = "status lock";
     };
     grid.appendChild(b);
   });
 }
 
+function showFlash(good) {
+  const f = document.getElementById("flash");
+  const mark = document.getElementById("flash-mark");
+  mark.textContent = good ? "✓" : "✕";
+  f.className = "flash " + (good ? "good" : "bad");
+  void f.offsetWidth;
+  f.classList.add("show");
+  setTimeout(() => { f.className = "flash"; }, 1200);
+}
+
 function renderReveal(msg) {
   document.querySelectorAll(".ans-btn").forEach((el, i) => {
     el.disabled = true;
+    el.classList.remove("faded");
     if (i === msg.correctIndex) el.classList.add("correct");
     else if (i === lastChoice) el.classList.add("wrong");
+    else el.classList.add("faded");
   });
   const me = msg.players.find(p => p.id === myId);
   const msgEl = document.getElementById("locked-msg");
+  const right = lastChoice === msg.correctIndex;
   if (msgEl) {
-    if (lastChoice === msg.correctIndex) { msgEl.textContent = "Correct! Score: " + (me ? me.score : "-"); msgEl.style.color = "#7CFC98"; }
-    else { msgEl.textContent = lastChoice === null ? "Time's up." : "Not quite. Score: " + (me ? me.score : "-"); msgEl.style.color = "#ff9b9b"; }
+    if (right) { msgEl.textContent = "Correct!  Score " + (me ? me.score : "-"); msgEl.className = "status good"; }
+    else if (lastChoice === null) { msgEl.textContent = "No answer locked in."; msgEl.className = "status bad"; }
+    else { msgEl.textContent = "Not quite.  Score " + (me ? me.score : "-"); msgEl.className = "status bad"; }
   }
+  if (lastChoice !== null) { showFlash(right); buzz(right ? [16, 60, 16] : 90); }
 }
 
 function renderFinal(msg) {
   const rank = msg.leaderboard.findIndex(p => p.id === myId) + 1;
   const me = msg.leaderboard.find(p => p.id === myId);
+  const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "🏆";
   document.getElementById("app").innerHTML = `
-    <h1>Final results</h1>
-    <div class="rank">You finished #${rank || "-"} of ${msg.leaderboard.length}</div>
-    <div class="score-num">${me ? me.score : 0}</div>
+    <div class="trophy">${medal}</div>
+    <h1 class="rise">Final results</h1>
+    <div class="rule"></div>
+    <div class="rank rise">You finished #${rank || "-"} of ${msg.leaderboard.length}</div>
+    <div class="score-num" id="score-num">0</div>
     <p class="sub">correct answers</p>
   `;
+  countUp(document.getElementById("score-num"), me ? me.score : 0);
+}
+
+function countUp(el, target) {
+  if (!el) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target === 0) { el.textContent = target; return; }
+  const dur = 900, start = performance.now();
+  (function step(now) {
+    const t = Math.min(1, (now - start) / dur);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
+    if (t < 1) requestAnimationFrame(step);
+  })(start);
 }
 
 renderJoin();
