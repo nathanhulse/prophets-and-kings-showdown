@@ -61,10 +61,11 @@
     filter: drop-shadow(0 3px 18px rgba(245,196,81,0.32)); }
   p.sub { font-family: var(--serif); color: var(--muted); font-size: clamp(14px,1.4vw,19px);
     letter-spacing: 2.5px; text-transform: uppercase; margin: 0 0 26px; }
-  .rule { width: 260px; max-width: 60%; height: 1px; margin: 0 auto 30px; position: relative;
-    background: linear-gradient(90deg, transparent, rgba(245,196,81,0.6), transparent); }
-  .rule::after { content: "✦"; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    color: var(--gold-2); font-size: 13px; background: var(--ink-0); padding: 0 10px; }
+  .rule { display: flex; align-items: center; justify-content: center; gap: 13px; margin: 0 auto 30px; }
+  .rule::before, .rule::after { content: ""; height: 1px; width: 120px; max-width: 22vw; }
+  .rule::before { background: linear-gradient(90deg, transparent, rgba(245,196,81,0.65)); }
+  .rule::after { background: linear-gradient(90deg, rgba(245,196,81,0.65), transparent); }
+  .rule span { color: var(--gold-2); font-size: 13px; line-height: 1; }
 
   /* ---------- lobby ---------- */
   .join-row { display: flex; align-items: center; justify-content: center; gap: 44px; margin-bottom: 30px; flex-wrap: wrap; }
@@ -233,7 +234,7 @@ function renderLobby() {
   app.innerHTML = `
     <h1 class="rise">Prophets &amp; Kings Showdown</h1>
     <p class="sub rise">The divided kingdom &amp; the kings of Judah</p>
-    <div class="rule"></div>
+    <div class="rule"><span>✦</span></div>
     <div class="join-row rise">
       <div>
         <div class="join-label">Join on your phone</div>
@@ -361,7 +362,7 @@ function renderFinal(msg) {
     <div class="trophy">🏆</div>
     <h1 class="rise">Final results</h1>
     <p class="sub rise">${msg.roundName || ""}</p>
-    <div class="rule"></div>
+    <div class="rule"><span>✦</span></div>
     <div class="leaderboard">
       ${msg.leaderboard.map((p, i) => lbRow(p, i)).join("")}
     </div>

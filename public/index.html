@@ -51,10 +51,11 @@
     filter: drop-shadow(0 2px 14px rgba(245,196,81,0.3)); }
   p.sub { font-family: var(--serif); color: var(--muted); font-size: 12px; letter-spacing: 2.2px;
     text-transform: uppercase; margin: 0 0 24px; }
-  .rule { width: 180px; height: 1px; margin: 0 auto 24px; position: relative;
-    background: linear-gradient(90deg, transparent, rgba(245,196,81,0.55), transparent); }
-  .rule::after { content: "✦"; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    color: var(--gold-2); font-size: 11px; background: var(--ink-0); padding: 0 9px; }
+  .rule { display: flex; align-items: center; justify-content: center; gap: 11px; margin: 0 auto 24px; }
+  .rule::before, .rule::after { content: ""; height: 1px; width: 84px; }
+  .rule::before { background: linear-gradient(90deg, transparent, rgba(245,196,81,0.6)); }
+  .rule::after { background: linear-gradient(90deg, rgba(245,196,81,0.6), transparent); }
+  .rule span { color: var(--gold-2); font-size: 11px; line-height: 1; }
   .rise { animation: rise 0.45s cubic-bezier(.16,.9,.3,1) both; }
   @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
@@ -202,7 +203,7 @@ function renderJoin() {
   app.innerHTML = `
     <h1 class="rise">Prophets &amp; Kings Showdown</h1>
     <p class="sub rise">The divided kingdom &amp; the kings of Judah</p>
-    <div class="rule"></div>
+    <div class="rule"><span>✦</span></div>
     <input type="text" id="name-input" placeholder="Your name" maxlength="18" autocomplete="off">
     <div class="pick-label">Choose your sigil</div>
     <div class="avatar-grid" id="avatar-grid"></div>
@@ -307,7 +308,7 @@ function renderFinal(msg) {
   document.getElementById("app").innerHTML = `
     <div class="trophy">${medal}</div>
     <h1 class="rise">Final results</h1>
-    <div class="rule"></div>
+    <div class="rule"><span>✦</span></div>
     <div class="rank rise">You finished #${rank || "-"} of ${msg.leaderboard.length}</div>
     <div class="score-num" id="score-num">0</div>
     <p class="sub">correct answers</p>
